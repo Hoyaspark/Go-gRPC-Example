@@ -1,4 +1,4 @@
-module github.com/hoyaspark/go-grpc-example
+module go-grpc-example
 
 go 1.18
 
