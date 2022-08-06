@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/hoyaspark/go-grpc-example/client"
 	"github.com/hoyaspark/go-grpc-example/data"
 	postpb "github.com/hoyaspark/go-grpc-example/proto/post"
 	userpb "github.com/hoyaspark/go-grpc-example/proto/user"
@@ -9,20 +10,23 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 )
 
-const portNumber = 9001
+const (
+	userPortNum int = iota + 9000
+	postPortNum
+)
 
 type postServer struct {
 	postpb.PostServer
-
 	userCli userpb.UserClient
 }
 
 func (s *postServer) ListPostsByUserId(ctx context.Context, req *postpb.ListPostsByUserIdRequest) (*postpb.ListPostsByUserIdResponse, error) {
 	userId := req.GetUserId()
 
-	res, err := s.userCli.GetUser(ctx, &userpb.GetUserRequest{UserId: userId}, grpc.EmptyCallOption{})
+	res, err := s.userCli.GetUser(ctx, &userpb.GetUserRequest{UserId: userId})
 
 	if err != nil {
 		log.Println(err)
@@ -105,18 +109,48 @@ func (s *userServer) ListUsers(ctx context.Context, req *userpb.ListUsersRequest
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(portNumber))
 
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
+	var wg sync.WaitGroup
 
-	grpc := grpc.NewServer()
-	userpb.RegisterUserServer(grpc, &userServer{})
+	wg.Add(2)
 
-	log.Printf("start gRPC server on %d port", portNumber)
+	go func() {
+		lis, err := net.Listen("tcp", ":"+strconv.Itoa(userPortNum))
 
-	if err := grpc.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %s", err)
-	}
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		grpcA := grpc.NewServer()
+		userpb.RegisterUserServer(grpcA, &userServer{})
+
+		log.Printf("start gRPC server on %d port", userPortNum)
+
+		if err := grpcA.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %s", err)
+			wg.Done()
+		}
+	}()
+
+	go func() {
+		lis, err := net.Listen("tcp", ":"+strconv.Itoa(postPortNum))
+
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		grpcB := grpc.NewServer()
+		userCli := client.GetUserClient("localhost:9000")
+		postpb.RegisterPostServer(grpcB, &postServer{userCli: userCli})
+
+		log.Printf("start gRPC server on %d port", postPortNum)
+
+		if err := grpcB.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %s", err)
+			wg.Done()
+		}
+	}()
+
+	wg.Wait()
+
 }
