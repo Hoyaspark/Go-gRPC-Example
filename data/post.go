@@ -1,6 +1,6 @@
 package data
 
-import "go-grpc-example/proto/post"
+import "github.com/hoyaspark/go-grpc-example/proto/post"
 
 type PostData struct {
 	UserId string

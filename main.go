@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"go-grpc-example/data"
-	postpb "go-grpc-example/proto/post"
-	userpb "go-grpc-example/proto/user"
+	"github.com/hoyaspark/go-grpc-example/data"
+	postpb "github.com/hoyaspark/go-grpc-example/proto/post"
+	userpb "github.com/hoyaspark/go-grpc-example/proto/user"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -113,7 +113,6 @@ func main() {
 
 	grpc := grpc.NewServer()
 	userpb.RegisterUserServer(grpc, &userServer{})
-	postpb.RegisterPostServer(grpc, &postServer{nil})
 
 	log.Printf("start gRPC server on %d port", portNumber)
 

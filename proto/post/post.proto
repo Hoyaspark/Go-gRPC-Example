@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package post;
 
-option go_package = "go-grpc-example/proto/post";
+option go_package = "github.com/hoyaspark/go-grpc-example/proto/post";
 
 service Post{
   rpc ListPostsByUserId(ListPostsByUserIdRequest) returns (ListPostsByUserIdResponse);

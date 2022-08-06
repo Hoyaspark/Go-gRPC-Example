@@ -1,7 +1,7 @@
 package data
 
 import (
-	userpb "go-grpc-example/proto/user"
+	userpb "github.com/hoyaspark/go-grpc-example/proto/user"
 )
 
 var UserData = []*userpb.UserMessage{
